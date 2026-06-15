@@ -19,7 +19,7 @@
 </head>
 
 <body>
-<main class="page" x-data="bolaoApp()">
+<main class="page" x-data="bolaoApp()" x-init="carregarJogos()">
     <header class="top-menu">
         <div class="brand">
             <span class="material-symbols-rounded">sports_soccer</span>
@@ -45,7 +45,7 @@
         <div class="hero-summary">
             <div>
                 <span>Jogos abertos</span>
-                <strong x-text="jogos.length"></strong>
+                <strong x-text="jogos.length || '...'"></strong>
             </div>
             <div>
                 <span>Apostas feitas</span>
@@ -60,31 +60,56 @@
             <p>Preencha o placar que você acredita e envie sua aposta.</p>
         </div>
 
-        <div class="tabs" role="tablist">
-            <button type="button" :class="{ active: filtro === 'todos' }" @click="filtro = 'todos'">Todos</button>
-            <button type="button" :class="{ active: filtro === 'grupo' }" @click="filtro = 'grupo'">Grupos</button>
-            <button type="button" :class="{ active: filtro === 'mataMata' }" @click="filtro = 'mataMata'">Mata-mata</button>
+        <div class="filters">
+            <label>
+                <span>Grupo</span>
+                <select x-model="grupoSelecionado">
+                    <option value="todos">Todos</option>
+                    <template x-for="grupo in grupos()" :key="grupo">
+                        <option :value="grupo" x-text="`Grupo ${grupo}`"></option>
+                    </template>
+                </select>
+            </label>
+
+            <div class="tabs" role="tablist">
+                <button type="button" :class="{ active: rodadaSelecionada === 'todas' }" @click="rodadaSelecionada = 'todas'">Todas</button>
+                <button type="button" :class="{ active: rodadaSelecionada === '1' }" @click="rodadaSelecionada = '1'">Rodada 1</button>
+                <button type="button" :class="{ active: rodadaSelecionada === '2' }" @click="rodadaSelecionada = '2'">Rodada 2</button>
+                <button type="button" :class="{ active: rodadaSelecionada === '3' }" @click="rodadaSelecionada = '3'">Rodada 3</button>
+            </div>
         </div>
+    </section>
+
+    <section class="empty-state" x-show="carregando">
+        <span class="material-symbols-rounded">sync</span>
+        <h3>Carregando jogos</h3>
+        <p>Buscando a fase de grupos no arquivo CSV.</p>
+    </section>
+
+    <section class="empty-state error" x-show="erroCarregamento">
+        <span class="material-symbols-rounded">error</span>
+        <h3>Não foi possível carregar o CSV</h3>
+        <p x-text="erroCarregamento"></p>
     </section>
 
     <section class="games-grid">
         <template x-for="jogo in jogosFiltrados()" :key="jogo.id">
             <article class="game-card">
                 <div class="game-topline">
-                    <span class="match-date" x-text="jogo.data"></span>
-                    <span class="status-chip" x-text="jogo.fase"></span>
+                    <span class="match-date" x-text="jogo.dataFormatada()"></span>
+                    <span class="status-chip" x-text="`Grupo ${jogo.grupo} - Rodada ${jogo.rodada}`"></span>
                 </div>
 
                 <div class="match">
                     <div class="team">
-                        <span class="flag" x-text="jogo.bandeiraCasa"></span>
+                        <img class="flag-img" :src="jogo.bandeiraCasaUrl()" :alt="`Bandeira ${jogo.timeCasa}`" />
                         <strong x-text="jogo.timeCasa"></strong>
                     </div>
 
                     <span class="versus">x</span>
 
                     <div class="team right">
-                        <span class="flag" x-text="jogo.bandeiraFora"></span>
+                        <img class="flag-img" :src="jogo.bandeiraForaUrl()" :alt="`Bandeira ${jogo.timeFora}`" />
                         <strong x-text="jogo.timeFora"></strong>
                     </div>
                 </div>
@@ -114,12 +139,26 @@
                     </div>
                 </div>
 
+                <div class="match-place">
+                    <span class="material-symbols-rounded">stadium</span>
+                    <p>
+                        <strong x-text="jogo.estadio"></strong>
+                        <small x-text="jogo.cidade"></small>
+                    </p>
+                </div>
+
                 <button class="filled-button" type="button" @click="apostar(jogo)">
                     <span class="material-symbols-rounded">add_shopping_cart</span>
                     Apostar neste jogo
                 </button>
             </article>
         </template>
+    </section>
+
+    <section class="empty-state" x-show="!carregando && !erroCarregamento && jogosFiltrados().length === 0">
+        <span class="material-symbols-rounded">sports_soccer</span>
+        <h3>Nenhum jogo encontrado</h3>
+        <p>Altere o grupo ou a rodada para ver outras partidas.</p>
     </section>
 
     <aside class="bet-preview" x-show="apostas.length > 0" x-transition>

@@ -13,22 +13,7 @@ function carrinhoApp() {
     },
 
     formasPagamento: [],
-
-    apostas: [
-      {
-        id: 101,
-        timeCasa: "Brasil",
-        timeFora: "Alemanha",
-        bandeiraCasa: "🇧🇷",
-        bandeiraFora: "🇩🇪",
-        data: "13 jun 2026",
-        palpite: "Brasil vence",
-        valor: 25,
-        retornoPossivel: 62.5,
-        status: "carrinho",
-        pagamentoId: null
-      }
-    ],
+    apostas: JSON.parse(localStorage.getItem("bolaoApostas") || "[]"),
 
     apostasFiltradas() {
       if (this.filtro === "todas") {
@@ -80,8 +65,13 @@ function carrinhoApp() {
 
       aposta.status = "finalizada";
       aposta.pagamentoId = this.pagamentoSelecionadoId;
+      this.salvarApostas();
 
       this.mostrarAviso("Aposta finalizada com sucesso.");
+    },
+
+    salvarApostas() {
+      localStorage.setItem("bolaoApostas", JSON.stringify(this.apostas));
     },
 
     abrirDetalhes(aposta) {
@@ -90,12 +80,12 @@ function carrinhoApp() {
 
     nomePagamento(pagamentoId) {
       const forma = this.formasPagamento.find((item) => item.id === pagamentoId);
-      return forma ? `${forma.nome} - ${forma.detalhe}` : "Não informado";
+      return forma ? `${forma.nome} - ${forma.detalhe}` : "Nao informado";
     },
 
     textoPagamento(aposta) {
       if (!aposta.pagamentoId) {
-        return "Aguardando finalização";
+        return "Aguardando finalizacao";
       }
 
       return `Pago com ${this.nomePagamento(aposta.pagamentoId)}`;
@@ -109,7 +99,7 @@ function carrinhoApp() {
         perdeu: "Perdeu"
       };
 
-      return textos[status] || "Não informado";
+      return textos[status] || "Nao informado";
     },
 
     totalCarrinho() {

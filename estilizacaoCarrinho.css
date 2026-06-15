@@ -467,6 +467,17 @@ button:disabled {
   font-size: 1.8rem;
 }
 
+.flag-img {
+  width: 56px;
+  height: 38px;
+  display: block;
+  object-fit: cover;
+  border: 1px solid var(--outline);
+  border-radius: 6px;
+  background: var(--white);
+  box-shadow: 0 5px 14px rgba(13, 38, 76, 0.12);
+}
+
 .versus {
   width: 34px;
   height: 34px;

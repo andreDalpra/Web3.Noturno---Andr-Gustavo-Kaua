@@ -21,15 +21,15 @@
 <body>
 <main class="page" x-data="carrinhoApp()">
     <header class="top-menu">
-        <div class="brand" @click="window.location.href = '/'" style="cursor: pointer">
-            <span class="material-symbols-rounded" >sports_soccer</span>
+        <div class="brand" @click="window.location.href = 'index.html'" style="cursor: pointer">
+            <span class="material-symbols-rounded">sports_soccer</span>
             <strong>Bolão 2026</strong>
         </div>
 
         <nav>
-            <a href="#">Início</a>
-            <a href="#">Apostas</a>
-            <a href="#" class="active">Carrinho</a>
+            <a href="index.html">Início</a>
+            <a href="index.html#jogos">Apostas</a>
+            <a href="carrinho.html" class="active">Carrinho</a>
         </nav>
     </header>
 
@@ -37,9 +37,7 @@
         <div>
             <span class="eyebrow">Bolão Copa 2026</span>
             <h1>Meu carrinho de apostas</h1>
-            <p>
-                Acompanhe seus palpites, pagamentos, apostas finalizadas e resultados em um só lugar.
-            </p>
+            <p>Acompanhe seus palpites, pagamentos, apostas finalizadas e resultados em um só lugar.</p>
         </div>
 
         <div class="hero-summary">
@@ -86,12 +84,10 @@
                             @click="pagamentoSelecionadoId = forma.id"
                     >
                         <span class="payment-icon material-symbols-rounded" x-text="forma.icone"></span>
-
                         <span>
-                <strong x-text="forma.nome"></strong>
-                <small x-text="forma.detalhe"></small>
-              </span>
-
+                            <strong x-text="forma.nome"></strong>
+                            <small x-text="forma.detalhe"></small>
+                        </span>
                         <span class="material-symbols-rounded check-icon">check_circle</span>
                     </button>
                 </template>
@@ -104,24 +100,12 @@
                     @submit.prevent="adicionarFormaPagamento"
             >
                 <div class="md-field">
-                    <input
-                            id="nomePagamento"
-                            type="text"
-                            x-model="novoPagamento.nome"
-                            required
-                            placeholder=" "
-                    />
+                    <input id="nomePagamento" type="text" x-model="novoPagamento.nome" required placeholder=" " />
                     <label for="nomePagamento">Nome do método</label>
                 </div>
 
                 <div class="md-field">
-                    <input
-                            id="detalhePagamento"
-                            type="text"
-                            x-model="novoPagamento.detalhe"
-                            required
-                            placeholder=" "
-                    />
+                    <input id="detalhePagamento" type="text" x-model="novoPagamento.detalhe" required placeholder=" " />
                     <label for="detalhePagamento">Fim do cartão, chave Pix ou carteira</label>
                 </div>
 
@@ -166,14 +150,14 @@
 
                         <div class="match">
                             <div class="team">
-                                <span class="flag" x-text="aposta.bandeiraCasa"></span>
+                                <img class="flag-img" :src="aposta.bandeiraCasa" :alt="`Bandeira ${aposta.timeCasa}`" />
                                 <strong x-text="aposta.timeCasa"></strong>
                             </div>
 
                             <span class="versus">x</span>
 
                             <div class="team right">
-                                <span class="flag" x-text="aposta.bandeiraFora"></span>
+                                <img class="flag-img" :src="aposta.bandeiraFora" :alt="`Bandeira ${aposta.timeFora}`" />
                                 <strong x-text="aposta.timeFora"></strong>
                             </div>
                         </div>
@@ -227,7 +211,7 @@
             <div class="empty-state" x-show="apostasFiltradas().length === 0">
                 <span class="material-symbols-rounded">sports_soccer</span>
                 <h3>Nenhuma aposta encontrada</h3>
-                <p>Altere o filtro para visualizar outras apostas.</p>
+                <p>Volte para a página inicial e escolha um jogo para apostar.</p>
             </div>
         </section>
     </section>
