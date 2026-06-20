@@ -17,6 +17,12 @@ class Jogo {
     this.odd = Number(dados.odd);
     this.golsCasa = 0;
     this.golsFora = 0;
+    this.encerrado = false;
+    this.placarCasa = null;
+    this.placarFora = null;
+    this.gols = [];
+    this.inicioApi = null;
+    this.detalhesAbertos = false;
   }
 
   placar() {
@@ -36,7 +42,7 @@ class Jogo {
   }
 
   dataFormatada() {
-    const data = new Date(`${this.data}T${this.hora}:00`);
+    const data = this.inicioApi ? new Date(this.inicioApi) : new Date(`${this.data}T${this.hora}:00`);
 
     return new Intl.DateTimeFormat("pt-BR", {
       day: "2-digit",
@@ -44,6 +50,77 @@ class Jogo {
       hour: "2-digit",
       minute: "2-digit"
     }).format(data);
+  }
+
+  apostasFechadas() {
+    const inicio = this.inicioApi ? new Date(this.inicioApi) : new Date(`${this.data}T${this.hora}:00`);
+    return this.encerrado || Date.now() >= inicio.getTime();
+  }
+
+  placarFinal() {
+    return `${this.placarCasa} x ${this.placarFora}`;
+  }
+
+  resumoResultado() {
+    if (this.placarCasa === this.placarFora) return "A partida terminou empatada";
+    return `${this.placarCasa > this.placarFora ? this.timeCasa : this.timeFora} venceu`;
+  }
+
+  totalGolsTexto() {
+    const total = this.placarCasa + this.placarFora;
+    return `${total} ${total === 1 ? "gol" : "gols"} na partida`;
+  }
+
+  textoStatus() {
+    if (this.encerrado) return "Encerrado";
+    if (this.apostasFechadas()) return "Em andamento";
+    return `Grupo ${this.grupo} · Rodada ${this.rodada}`;
+  }
+
+  aplicarResultado(evento) {
+    const competicao = evento.competitions?.[0];
+    const times = competicao?.competitors || [];
+    const casa = times.find((time) => time.homeAway === "home");
+    const fora = times.find((time) => time.homeAway === "away");
+
+    this.inicioApi = evento.date || null;
+    this.encerrado = Boolean(evento.status?.type?.completed);
+    if (!this.encerrado || !casa || !fora) return;
+
+    this.placarCasa = Number(casa.score);
+    this.placarFora = Number(fora.score);
+    this.gols = (competicao.details || [])
+      .filter((detalhe) => detalhe.scoringPlay && !detalhe.shootout)
+      .map((detalhe) => ({
+        jogador: detalhe.athletesInvolved?.[0]?.displayName || "Autor não informado",
+        minuto: detalhe.clock?.displayValue || "Minuto não informado",
+        time: String(detalhe.team?.id) === String(casa.id) ? this.timeCasa : this.timeFora
+      }));
+  }
+}
+
+class ApiResultados {
+  static url(data) {
+    return `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${data.replaceAll("-", "")}`;
+  }
+
+  static async buscar(datas) {
+    const respostas = await Promise.allSettled(datas.map(async (data) => {
+      const resposta = await fetch(this.url(data));
+      if (!resposta.ok) throw new Error(`Falha ao buscar resultados de ${data}`);
+      return (await resposta.json()).events || [];
+    }));
+
+    return respostas.flatMap((resposta) => resposta.status === "fulfilled" ? resposta.value : []);
+  }
+
+  static encontrarEvento(jogo, eventos) {
+    return eventos.find((evento) => {
+      const times = evento.competitions?.[0]?.competitors || [];
+      const casa = times.find((time) => time.homeAway === "home")?.team?.abbreviation;
+      const fora = times.find((time) => time.homeAway === "away")?.team?.abbreviation;
+      return casa === jogo.codigoCasa && fora === jogo.codigoFora;
+    });
   }
 }
 
@@ -151,6 +228,7 @@ function bolaoApp() {
   return {
     grupoSelecionado: "todos",
     rodadaSelecionada: "todas",
+    situacaoSelecionada: "todos",
     carregando: true,
     erroCarregamento: "",
     aviso: "",
@@ -167,11 +245,26 @@ function bolaoApp() {
 
         const textoCsv = await resposta.text();
         this.jogos = LeitorCsv.converter(textoCsv).map((dados) => new Jogo(dados));
+        await this.carregarResultados();
       } catch (erro) {
         this.erroCarregamento = "Abra a página pelo servidor local para permitir a leitura do arquivo CSV.";
       } finally {
         this.carregando = false;
       }
+    },
+
+    async carregarResultados() {
+      const hoje = new Date();
+      hoje.setHours(23, 59, 59, 999);
+      const datas = [...new Set(this.jogos
+        .filter((jogo) => new Date(`${jogo.data}T${jogo.hora}:00`) <= hoje)
+        .map((jogo) => jogo.data))];
+
+      const eventos = await ApiResultados.buscar(datas);
+      this.jogos.forEach((jogo) => {
+        const evento = ApiResultados.encontrarEvento(jogo, eventos);
+        if (evento) jogo.aplicarResultado(evento);
+      });
     },
 
     grupos() {
@@ -182,12 +275,28 @@ function bolaoApp() {
       return this.jogos.filter((jogo) => {
         const passouGrupo = this.grupoSelecionado === "todos" || jogo.grupo === this.grupoSelecionado;
         const passouRodada = this.rodadaSelecionada === "todas" || jogo.rodada === this.rodadaSelecionada;
+        const passouSituacao = this.situacaoSelecionada === "todos"
+          || (this.situacaoSelecionada === "abertos" && !jogo.apostasFechadas())
+          || (this.situacaoSelecionada === "encerrados" && jogo.encerrado);
 
-        return passouGrupo && passouRodada;
+        return passouGrupo && passouRodada && passouSituacao;
       });
     },
 
+    quantidadeAbertos() {
+      return this.jogos.filter((jogo) => !jogo.apostasFechadas()).length;
+    },
+
+    quantidadeEncerrados() {
+      return this.jogos.filter((jogo) => jogo.encerrado).length;
+    },
+
     apostar(jogo) {
+      if (jogo.apostasFechadas()) {
+        this.mostrarAviso("Esta partida já começou e não aceita mais apostas.");
+        return;
+      }
+
       if (!Number.isInteger(jogo.golsCasa) || !Number.isInteger(jogo.golsFora)) {
         this.mostrarAviso("Informe um placar válido para apostar.");
         return;

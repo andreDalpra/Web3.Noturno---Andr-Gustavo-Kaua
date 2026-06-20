@@ -45,11 +45,11 @@
         <div class="hero-summary">
             <div>
                 <span>Jogos abertos</span>
-                <strong x-text="jogos.length || '...'"></strong>
+                <strong x-text="quantidadeAbertos()"></strong>
             </div>
             <div>
-                <span>Apostas feitas</span>
-                <strong x-text="apostas.length"></strong>
+                <span>Resultados disponíveis</span>
+                <strong x-text="quantidadeEncerrados()"></strong>
             </div>
         </div>
     </section>
@@ -68,6 +68,15 @@
                     <template x-for="grupo in grupos()" :key="grupo">
                         <option :value="grupo" x-text="`Grupo ${grupo}`"></option>
                     </template>
+                </select>
+            </label>
+
+            <label>
+                <span>Situação</span>
+                <select x-model="situacaoSelecionada">
+                    <option value="todos">Todos os jogos</option>
+                    <option value="abertos">Abertos para aposta</option>
+                    <option value="encerrados">Resultados</option>
                 </select>
             </label>
 
@@ -94,10 +103,10 @@
 
     <section class="games-grid">
         <template x-for="jogo in jogosFiltrados()" :key="jogo.id">
-            <article class="game-card">
+            <article class="game-card" :class="{ finished: jogo.encerrado }">
                 <div class="game-topline">
                     <span class="match-date" x-text="jogo.dataFormatada()"></span>
-                    <span class="status-chip" x-text="`Grupo ${jogo.grupo} - Rodada ${jogo.rodada}`"></span>
+                    <span class="status-chip" :class="{ finished: jogo.encerrado, closed: jogo.apostasFechadas() && !jogo.encerrado }" x-text="jogo.textoStatus()"></span>
                 </div>
 
                 <div class="match">
@@ -106,7 +115,7 @@
                         <strong x-text="jogo.timeCasa"></strong>
                     </div>
 
-                    <span class="versus">x</span>
+                    <span class="versus" :class="{ 'final-score': jogo.encerrado }" x-text="jogo.encerrado ? jogo.placarFinal() : 'x'"></span>
 
                     <div class="team right">
                         <img class="flag-img" :src="jogo.bandeiraForaUrl()" :alt="`Bandeira ${jogo.timeFora}`" />
@@ -114,7 +123,39 @@
                     </div>
                 </div>
 
-                <div class="score-bet">
+                <section class="result-overview" x-show="jogo.encerrado && !jogo.detalhesAbertos">
+                    <div class="result-overview-icon">
+                        <span class="material-symbols-rounded">emoji_events</span>
+                    </div>
+                    <div>
+                        <small>Resultado oficial</small>
+                        <strong x-text="jogo.resumoResultado()"></strong>
+                        <p x-text="jogo.totalGolsTexto()"></p>
+                    </div>
+                    <span class="details-hint">Veja os autores dos gols em “Ver detalhes”</span>
+                </section>
+
+                <section class="match-result" x-show="jogo.encerrado && jogo.detalhesAbertos" x-transition>
+                    <div class="goal-list">
+                        <h3>Quem marcou</h3>
+                        <template x-if="jogo.gols.length > 0">
+                            <ul>
+                                <template x-for="(gol, indice) in jogo.gols" :key="`${jogo.id}-${indice}`">
+                                    <li><span class="material-symbols-rounded">sports_soccer</span><strong x-text="gol.jogador"></strong><small x-text="`${gol.minuto} · ${gol.time}`"></small></li>
+                                </template>
+                            </ul>
+                        </template>
+                        <p class="goals-unavailable" x-show="jogo.gols.length === 0">A API não informou os autores dos gols desta partida.</p>
+                    </div>
+                    <small class="api-source">Dados de resultados: ESPN</small>
+                </section>
+
+                <div class="closed-message" x-show="jogo.apostasFechadas() && !jogo.encerrado">
+                    <span class="material-symbols-rounded">lock_clock</span>
+                    <p><strong>Apostas encerradas</strong><small>A partida já começou. Aguardando o placar oficial.</small></p>
+                </div>
+
+                <div class="score-bet" x-show="!jogo.apostasFechadas()">
                     <label>
                         <span x-text="jogo.timeCasa"></span>
                         <input type="number" min="0" max="20" x-model.number="jogo.golsCasa" />
@@ -128,7 +169,7 @@
                     </label>
                 </div>
 
-                <div class="bet-info">
+                <div class="bet-info" x-show="!jogo.apostasFechadas()">
                     <div>
                         <span>Valor da aposta</span>
                         <strong x-text="formatarMoeda(jogo.valor)"></strong>
@@ -147,10 +188,21 @@
                     </p>
                 </div>
 
-                <button class="filled-button" type="button" @click="apostar(jogo)">
+                <button class="filled-button" type="button" x-show="!jogo.apostasFechadas()" @click="apostar(jogo)">
                     <span class="material-symbols-rounded">add_shopping_cart</span>
                     Apostar neste jogo
                 </button>
+
+                <div class="finished-actions" x-show="jogo.encerrado">
+                    <button class="filled-button" type="button" disabled>
+                        <span class="material-symbols-rounded">lock</span>
+                        Apostas encerradas
+                    </button>
+                    <button class="tonal-button" type="button" @click="jogo.detalhesAbertos = !jogo.detalhesAbertos">
+                        <span class="material-symbols-rounded" x-text="jogo.detalhesAbertos ? 'expand_less' : 'receipt_long'"></span>
+                        <span x-text="jogo.detalhesAbertos ? 'Ocultar detalhes' : 'Ver detalhes'"></span>
+                    </button>
+                </div>
             </article>
         </template>
     </section>
