@@ -1,5 +1,9 @@
 function carrinhoApp() {
   return {
+    carteiraAberta: false,
+    mostrarAdicionarSaldo: false,
+    valorNovoSaldo: null,
+    saldoInicial: Number(localStorage.getItem("bolaoSaldoInicial") || 500),
     filtro: "todas",
     pagamentoSelecionadoId: null,
     mostrarFormularioPagamento: false,
@@ -112,6 +116,29 @@ function carrinhoApp() {
       return this.apostas
         .filter((aposta) => aposta.status !== "carrinho")
         .reduce((total, aposta) => total + aposta.valor, 0);
+    },
+
+    saldoApostado() {
+      return this.apostas.reduce((total, aposta) => total + Number(aposta.valor || 0), 0);
+    },
+
+    saldoDisponivel() {
+      return Math.max(0, this.saldoInicial - this.saldoApostado());
+    },
+
+    adicionarSaldo() {
+      const valor = Math.round(Number(this.valorNovoSaldo) * 100) / 100;
+
+      if (!Number.isFinite(valor) || valor <= 0) {
+        this.mostrarAviso("Informe um valor válido maior que zero.");
+        return;
+      }
+
+      this.saldoInicial = Math.round((this.saldoInicial + valor) * 100) / 100;
+      localStorage.setItem("bolaoSaldoInicial", String(this.saldoInicial));
+      this.valorNovoSaldo = null;
+      this.mostrarAdicionarSaldo = false;
+      this.mostrarAviso(`Saldo de ${this.formatarMoeda(valor)} adicionado com sucesso.`);
     },
 
     formatarMoeda(valor) {

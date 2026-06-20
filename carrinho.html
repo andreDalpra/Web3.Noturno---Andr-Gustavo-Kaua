@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Carrinho de Apostas - Bolão 2026</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -26,11 +27,40 @@
             <strong>Bolão 2026</strong>
         </div>
 
-        <nav>
-            <a href="index.html">Início</a>
-            <a href="index.html#jogos">Apostas</a>
-            <a href="carrinho.html" class="active">Carrinho</a>
-        </nav>
+        <div class="header-actions">
+            <nav>
+                <a href="index.html">Início</a>
+                <a href="index.html#jogos">Apostas</a>
+                <a href="carrinho.html" class="active">Carrinho</a>
+            </nav>
+            <div class="wallet-area" @click.outside="carteiraAberta = false">
+                <button class="wallet-button" type="button" @click="carteiraAberta = !carteiraAberta" :aria-expanded="carteiraAberta">
+                    <span class="material-symbols-rounded">account_balance_wallet</span>
+                    <span><small>Meu saldo</small><strong x-text="formatarMoeda(saldoDisponivel())"></strong></span>
+                    <span class="material-symbols-rounded wallet-chevron" x-text="carteiraAberta ? 'expand_less' : 'expand_more'"></span>
+                </button>
+                <aside class="wallet-popover" x-show="carteiraAberta" x-transition x-cloak>
+                    <div class="wallet-popover-title">
+                        <span class="material-symbols-rounded">account_balance_wallet</span>
+                        <div><small>Carteira do bolão</small><strong>Resumo do saldo</strong></div>
+                    </div>
+                    <dl>
+                        <div><dt>Saldo disponível</dt><dd x-text="formatarMoeda(saldoDisponivel())"></dd></div>
+                        <div><dt>Saldo apostado</dt><dd x-text="formatarMoeda(saldoApostado())"></dd></div>
+                    </dl>
+                    <button class="wallet-add-toggle" type="button" @click="mostrarAdicionarSaldo = !mostrarAdicionarSaldo">
+                        <span class="material-symbols-rounded">add_card</span>
+                        Adicionar saldo
+                    </button>
+                    <form class="wallet-add-form" x-show="mostrarAdicionarSaldo" x-transition @submit.prevent="adicionarSaldo">
+                        <label for="valorNovoSaldoCarrinho">Valor para adicionar</label>
+                        <div class="wallet-money-field"><span>R$</span><input id="valorNovoSaldoCarrinho" type="number" min="0.01" step="0.01" x-model.number="valorNovoSaldo" placeholder="0,00" /></div>
+                        <button type="submit">Confirmar saldo</button>
+                    </form>
+                    <p>Valores no carrinho já ficam reservados para evitar apostas acima do saldo.</p>
+                </aside>
+            </div>
+        </div>
     </header>
 
     <section class="hero">
