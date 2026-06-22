@@ -106,7 +106,6 @@ button:disabled {
 .wallet-popover dt { color: var(--muted); font-size: 0.8rem; }
 .wallet-popover dd { margin: 0; font-weight: 700; }
 .wallet-popover p { margin: 0; color: var(--muted); font-size: 0.74rem; }
-+
 .wallet-add-toggle {
   width: 100%;
   min-height: 42px;
@@ -210,6 +209,30 @@ button:disabled {
   background: var(--surface-container);
   color: var(--blue);
 }
+.top-menu .login-action,
+.top-menu .login-action.active {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--blue);
+  color: var(--white);
+  box-shadow: 0 5px 14px rgba(11, 87, 208, 0.2);
+  white-space: nowrap;
+}
+
+.top-menu .login-action:hover {
+  background: var(--blue-dark);
+  color: var(--white);
+}
+
+.login-action .material-symbols-rounded {
+  font-size: 1.15rem;
+}
+
 
 .hero {
   min-height: 260px;
@@ -807,6 +830,8 @@ dd {
     left: 0;
     right: auto;
   }
+
+  .login-action { width: 100%; }
 
   .hero {
     padding: 24px;

@@ -1,5 +1,10 @@
 function rankingApp() {
   return {
+    carteiraAberta: false,
+    mostrarAdicionarSaldo: false,
+    valorNovoSaldo: null,
+    saldoInicial: Number(localStorage.getItem("bolaoSaldoInicial") || 500),
+    aviso: "",
     filtro: "maisApostou",
     busca: "",
 
@@ -102,6 +107,37 @@ function rankingApp() {
       return `${this.formatarMoeda(usuario.totalApostado)} apostados nesta semana`;
     },
 
+    apostasSalvas() {
+      try {
+        return JSON.parse(localStorage.getItem("bolaoApostas") || "[]");
+      } catch {
+        return [];
+      }
+    },
+
+    saldoApostado() {
+      return this.apostasSalvas().reduce((total, aposta) => total + Number(aposta.valor || 0), 0);
+    },
+
+    saldoDisponivel() {
+      return Math.max(0, this.saldoInicial - this.saldoApostado());
+    },
+
+    adicionarSaldo() {
+      const valor = Math.round(Number(this.valorNovoSaldo) * 100) / 100;
+
+      if (!Number.isFinite(valor) || valor <= 0) {
+        this.mostrarAviso("Informe um valor válido maior que zero.");
+        return;
+      }
+
+      this.saldoInicial = Math.round((this.saldoInicial + valor) * 100) / 100;
+      localStorage.setItem("bolaoSaldoInicial", String(this.saldoInicial));
+      this.valorNovoSaldo = null;
+      this.mostrarAdicionarSaldo = false;
+      this.mostrarAviso(`Saldo de ${this.formatarMoeda(valor)} adicionado com sucesso.`);
+    },
+
     descricaoFiltro() {
       const textos = {
         maisApostou: "Classificação por maior valor total apostado.",
@@ -146,6 +182,11 @@ function rankingApp() {
         style: "currency",
         currency: "BRL"
       }).format(valor);
+    },
+
+    mostrarAviso(mensagem) {
+      this.aviso = mensagem;
+      setTimeout(() => { this.aviso = ""; }, 2600);
     }
   };
 }
