@@ -19,6 +19,8 @@
   box-sizing: border-box;
 }
 
+[x-cloak] { display: none !important; }
+
 html {
   scroll-behavior: smooth;
 }
@@ -48,6 +50,7 @@ button {
 }
 
 .top-menu {
+  position: relative;
   height: 68px;
   display: flex;
   align-items: center;
@@ -278,6 +281,116 @@ button {
   font-weight: 700;
 }
 
+.header-actions { display: flex; align-items: center; gap: 12px; }
+.wallet-area { position: relative; }
+.wallet-button {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 12px;
+  border: 1px solid #b8e5cb;
+  border-radius: 14px;
+  background: #f2fff7;
+  color: #075c31;
+}
+.wallet-button > span:nth-child(2) { display: grid; text-align: left; line-height: 1.15; }
+.wallet-button small { color: var(--muted); font-size: 0.68rem; }
+.wallet-button strong { margin-top: 3px; font-size: 0.86rem; }
+.wallet-chevron { color: var(--muted); font-size: 1.15rem; }
+.wallet-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 30;
+  width: min(340px, calc(100vw - 32px));
+  padding: 18px;
+  border: 1px solid var(--outline);
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: var(--shadow);
+}
+.wallet-popover-title { display: flex; align-items: center; gap: 10px; color: var(--green); }
+.wallet-popover-title small, .wallet-popover-title strong { display: block; }
+.wallet-popover-title small { color: var(--muted); }
+.wallet-popover dl { display: grid; gap: 10px; margin: 16px 0; }
+.wallet-popover dl div { display: flex; justify-content: space-between; gap: 16px; padding: 10px 12px; border-radius: var(--radius); background: var(--surface); }
+.wallet-popover dt { color: var(--muted); font-size: 0.8rem; }
+.wallet-popover dd { margin: 0; font-weight: 700; }
+.wallet-popover p { margin: 0; color: var(--muted); font-size: 0.74rem; }
++
+.wallet-add-toggle {
+  width: 100%;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--green-soft);
+  color: #075c31;
+  font-weight: 700;
+}
+
+.wallet-add-form {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.wallet-add-form label {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.wallet-money-field {
+  height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 11px;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius);
+  background: var(--white);
+  font-weight: 700;
+}
+
+.wallet-money-field:focus-within {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(11, 87, 208, 0.12);
+}
+
+.wallet-money-field input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+}
+
+.wallet-add-form button {
+  min-height: 38px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--blue);
+  color: var(--white);
+  font-weight: 700;
+}
+
+.wallet-add-toggle + .wallet-add-form + p,
+.wallet-add-toggle + p {
+  margin-top: 12px;
+}
+
+
 .status-chip.finished { background: var(--green-soft); color: #075c31; }
 .status-chip.closed { background: var(--surface-container); color: var(--muted); }
 
@@ -492,16 +605,43 @@ button {
 }
 
 .bet-info {
+  height: 69px;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 10px;
 }
 
-.bet-info div {
-  padding: 12px;
+.bet-info > div,
+.bet-info > label {
+  padding: 8px 12px;
   border-radius: var(--radius);
   background: var(--surface);
 }
+
+.bet-value-field { display: block; }
+.bet-info .money-input {
+  height: 30px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+.money-input b { flex: 0 0 auto; color: var(--text); font-size: 0.9rem; }
+.money-input input {
+  flex: 1 1 auto;
+  width: 0;
+  min-width: 0;
+  border: 0;
+  border-bottom: 1px solid var(--outline);
+  background: transparent;
+  color: var(--text);
+  font-weight: 700;
+  line-height: 1;
+  outline: none;
+}
+.money-input input:focus { border-color: var(--blue); }
 
 .bet-info span {
   display: block;
@@ -678,6 +818,22 @@ button {
   .top-menu nav {
     width: 100%;
     overflow-x: auto;
+  }
+
+  .header-actions {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .wallet-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .wallet-popover {
+    left: 0;
+    right: auto;
   }
 
   .hero {

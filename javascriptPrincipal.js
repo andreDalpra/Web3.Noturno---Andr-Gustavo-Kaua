@@ -226,6 +226,10 @@ class LeitorCsv {
 
 function bolaoApp() {
   return {
+    carteiraAberta: false,
+    mostrarAdicionarSaldo: false,
+    valorNovoSaldo: null,
+    saldoInicial: Number(localStorage.getItem("bolaoSaldoInicial") || 500),
     grupoSelecionado: "todos",
     rodadaSelecionada: "todas",
     situacaoSelecionada: "todos",
@@ -237,6 +241,7 @@ function bolaoApp() {
 
     async carregarJogos() {
       try {
+        localStorage.setItem("bolaoSaldoInicial", String(this.saldoInicial));
         const resposta = await fetch("jogos-grupos.csv");
 
         if (!resposta.ok) {
@@ -291,6 +296,38 @@ function bolaoApp() {
       return this.jogos.filter((jogo) => jogo.encerrado).length;
     },
 
+    apostasSalvas() {
+      try {
+        return JSON.parse(localStorage.getItem("bolaoApostas") || "[]");
+      } catch {
+        return [];
+      }
+    },
+
+    saldoApostado() {
+      this.apostas.length;
+      return this.apostasSalvas().reduce((total, aposta) => total + Number(aposta.valor || 0), 0);
+    },
+
+    saldoDisponivel() {
+      return Math.max(0, this.saldoInicial - this.saldoApostado());
+    },
+
+    adicionarSaldo() {
+      const valor = Math.round(Number(this.valorNovoSaldo) * 100) / 100;
+
+      if (!Number.isFinite(valor) || valor <= 0) {
+        this.mostrarAviso("Informe um valor válido maior que zero.");
+        return;
+      }
+
+      this.saldoInicial = Math.round((this.saldoInicial + valor) * 100) / 100;
+      localStorage.setItem("bolaoSaldoInicial", String(this.saldoInicial));
+      this.valorNovoSaldo = null;
+      this.mostrarAdicionarSaldo = false;
+      this.mostrarAviso(`Saldo de ${this.formatarMoeda(valor)} adicionado com sucesso.`);
+    },
+
     apostar(jogo) {
       if (jogo.apostasFechadas()) {
         this.mostrarAviso("Esta partida já começou e não aceita mais apostas.");
@@ -304,6 +341,19 @@ function bolaoApp() {
 
       if (jogo.golsCasa < 0 || jogo.golsFora < 0) {
         this.mostrarAviso("O placar não pode ter número negativo.");
+        return;
+      }
+
+      if (!Number.isFinite(jogo.valor) || jogo.valor <= 0) {
+        this.mostrarAviso("Informe um valor de aposta maior que zero.");
+        return;
+      }
+
+      jogo.valor = Math.round(jogo.valor * 100) / 100;
+
+      if (jogo.valor > this.saldoDisponivel()) {
+        this.mostrarAviso(`Saldo insuficiente. Disponível: ${this.formatarMoeda(this.saldoDisponivel())}.`);
+        setTimeout(() => { this.carteiraAberta = true; }, 0);
         return;
       }
 
